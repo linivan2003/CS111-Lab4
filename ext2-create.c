@@ -206,8 +206,8 @@ void write_superblock(int fd) {
 	superblock.s_first_data_block = SUPERBLOCK_BLOCKNO; /* First Data Block */
 	superblock.s_log_block_size = 0;					/* 1024 */
 	superblock.s_log_frag_size = 0;						/* 1024 */
-	superblock.s_blocks_per_group = BLOCK_SIZE*6;
-	superblock.s_frags_per_group = BLOCK_SIZE*6;
+	superblock.s_blocks_per_group = BLOCK_SIZE*8;
+	superblock.s_frags_per_group = BLOCK_SIZE*8;
 	superblock.s_inodes_per_group = NUM_INODES;
 	superblock.s_mtime = 0;				/* Mount time */
 	superblock.s_wtime = current_time;	/* Write time */
@@ -284,7 +284,18 @@ void write_block_bitmap(int fd)
 
 	// TODO It's all yours
 	u8 map_value[BLOCK_SIZE];
-
+	map_value[0] = 0xFF; // blocks 1-23
+	map_value[1] = 0xFF;
+	map_value[2] = 0b01111111;
+	for (int i = 3; i < 127; i++) //blocks 24-1015
+	{
+		map_value[i] = 0b00000000;
+	}
+	map_value[127] = 0b10000000;   //blocks 1016-1023
+	for (int i = 128; i < BLOCK_SIZE; i++) //blocks 1024-8192
+    {
+        map_value[i] = 0xFF;
+    }
 	if (write(fd, map_value, BLOCK_SIZE) != BLOCK_SIZE)
 	{
 		errno_exit("write");
@@ -301,7 +312,27 @@ void write_inode_bitmap(int fd)
 
 	// TODO It's all yours
 	u8 map_value[BLOCK_SIZE];
-
+	for (int i = 0; i < BLOCK_SIZE; i++) //initalize all as allocated
+    {
+        map_value[i] = 0xFF;
+    }
+	map_value[0] = 0xFF; //inodes 13-128 are free
+	map_value[1] = 0b00011111;
+	map_value[2] = 0b00000000;
+	map_value[3] = 0b00000000;
+	map_value[4] = 0b00000000;
+	map_value[5] = 0b00000000;
+	map_value[6] = 0b00000000;
+	map_value[7] = 0b00000000;
+	map_value[8] = 0b00000000;
+	map_value[9] = 0b00000000;
+	map_value[10] = 0b00000000;
+	map_value[11] = 0b00000000;
+	map_value[12] = 0b00000000;
+	map_value[13] = 0b00000000;
+	map_value[14] = 0b00000000;
+	map_value[15] = 0b00000000;
+	
 	if (write(fd, map_value, BLOCK_SIZE) != BLOCK_SIZE)
 	{
 		errno_exit("write");
